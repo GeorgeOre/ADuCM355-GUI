@@ -23,7 +23,9 @@ This file outlines the UI structure:
     -TO DO
 #######################GORECODE#######################
 '''
+import csv
 import os
+import time
 #Packages
 import tkinter as tk
 from tkinter import filedialog
@@ -55,7 +57,7 @@ class StartFrame(tk.Frame):
     def __init__(self, master, switch_frame):
         super().__init__(master)
 
-        self.label = tk.Label(self, text="Welcome to GORE CODE AHAHAHAHHA")
+        self.label = tk.Label(self, text="Welcome to the ADuCM355 Testing Inteface")
         self.label.pack(pady=20)
 
 
@@ -104,55 +106,65 @@ class Frame1(tk.Frame):
         super().__init__(master)
 
         self.label = tk.Label(self, text="Settings")
-        self.label.grid(row=0, column=2)
+        self.label.grid(row=0, column=3)
+
+        self.note = tk.Label(self, text="*** IMPORTANT ***\n\nSettings must follow\nthe specified format")
+        self.note.grid(row=0, column=0)
 
         self.channel_entry = tk.Entry(self, width=50)
-        self.channel_entry.grid(row=1, column=2)
-        self.channel_entry.insert(0, "0 or 1")
+        self.channel_entry.grid(row=1, column=3)
         self.channel_label = tk.Label(self, text="Enter Channel:")
-        self.channel_label.grid(row=1, column=1)
+        self.channel_label.grid(row=1, column=2)
+        self.channel_label2 = tk.Label(self, text="One character: 0 or 1")
+        self.channel_label2.grid(row=1, column=4)
 
         self.starting_entry = tk.Entry(self, width=50)
-        self.starting_entry.grid(row=2, column=2)
-        self.starting_entry.insert(0, "Please follow format: -9999 to +9999")
+        self.starting_entry.grid(row=2, column=3)
         self.starting_label = tk.Label(self, text="Enter Starting Voltage:")
-        self.starting_label.grid(row=2, column=1)
+        self.starting_label.grid(row=2, column=2)
+        self.starting_label2 = tk.Label(self, text="Five characters: -9999 to +9999")
+        self.starting_label2.grid(row=2, column=4)
 
         self.finishing_entry = tk.Entry(self, width=50)
-        self.finishing_entry.grid(row=3, column=2)
-        self.finishing_entry.insert(0, "Same as above, remember to have 5 total characters")
+        self.finishing_entry.grid(row=3, column=3)
         self.finishing_label = tk.Label(self, text="Enter Finishing Voltage")
-        self.finishing_label.grid(row=3, column=1)
+        self.finishing_label.grid(row=3, column=2)
+        self.finishing_label2 = tk.Label(self, text="Five characters: -9999 to +9999")
+        self.finishing_label2.grid(row=3, column=4)
 
         self.amp_entry = tk.Entry(self, width=50)
-        self.amp_entry.grid(row=4, column=2)
-        self.amp_entry.insert(0, "Please follow format 000 to 999")
+        self.amp_entry.grid(row=4, column=3)
         self.amp_label = tk.Label(self, text="Enter Amplitude")
-        self.amp_label.grid(row=4, column=1)
+        self.amp_label.grid(row=4, column=2)
+        self.amp_label2 = tk.Label(self, text="Three characters: 000 to 999")
+        self.amp_label2.grid(row=4, column=4)
 
         self.step_entry = tk.Entry(self, width=50)
-        self.step_entry.grid(row=5, column=2)
-        self.step_entry.insert(0, "Same as above")
+        self.step_entry.grid(row=5, column=3)
         self.step_label = tk.Label(self, text="Enter Step")
-        self.step_label.grid(row=5, column=1)
+        self.step_label.grid(row=5, column=2)
+        self.step_label2 = tk.Label(self, text="Three characters 000 to 999")
+        self.step_label2.grid(row=5, column=4)
 
         self.freq_entry = tk.Entry(self, width=50)
-        self.freq_entry.grid(row=6, column=2)
-        self.freq_entry.insert(0, "Please follow format 00000 to 99999")
+        self.freq_entry.grid(row=6, column=3)
         self.freq_label = tk.Label(self, text="Enter Frequency")
-        self.freq_label.grid(row=6, column=1)
+        self.freq_label.grid(row=6, column=2)
+        self.freq_label2 = tk.Label(self, text="Five characters: 00000 to 99999")
+        self.freq_label2.grid(row=6, column=4)
 
         self.eq_entry = tk.Entry(self, width=50)
-        self.eq_entry.grid(row=7, column=2)
-        self.eq_entry.insert(0, "Please follow format 0000 to 9999")
+        self.eq_entry.grid(row=7, column=3)
         self.eq_label = tk.Label(self, text="Enter Equilibrium Time")
-        self.eq_label.grid(row=7, column=1)
+        self.eq_label.grid(row=7, column=2)
+        self.eq_label2 = tk.Label(self, text="Four characters: 0000 to 9999")
+        self.eq_label2.grid(row=7, column=4)
 
         self.save_button = tk.Button(self, text="Save Settings", command=lambda: self.save(channel, VInitial, VFinal, VAmplitude, VStep, Frequency, Equilibrium))
-        self.save_button.grid(row=8, column=2)
+        self.save_button.grid(row=8, column=3)
 
         self.back_button = tk.Button(self, text="Back to Main Menu", command=lambda: switch_frame(MainMenuFrame))
-        self.back_button.grid(row=9, column=2)
+        self.back_button.grid(row=9, column=3)
 
     def save(self, c, st, fh, a, sp, fy, e):
         chan = self.channel_entry.get()
@@ -185,7 +197,9 @@ class Frame2(tk.Frame):
     def __init__(self, master, switch_frame):
         super().__init__(master)
 
-        self.test_button = tk.Button(self, text="Start experiment", command=lambda: self.start_experiment())
+        self.save_data_button = None
+        self.save_graph_button = None
+        self.test_button = tk.Button(self, text="Start experiment", command=lambda: (self.add_finished_notification(), self.start_experiment()))
         self.test_button.pack()
 
         self.serial_data = []  # Placeholder for received serial data
@@ -196,32 +210,28 @@ class Frame2(tk.Frame):
         self.back_button = tk.Button(self, text="Back to Main Menu", command=lambda: switch_frame(MainMenuFrame))
         self.back_button.pack()
 
+    def add_loading_notification(self):
+        # Tell user to wait
+        self.loading_label = tk.Label(self, text="Please wait, data loading...")
+        self.loading_label.pack()
+
+    def add_finished_notification(self):
+        # Tell user to wait
+        self.finished_label = tk.Label(self, text="Experiment success!")
+        self.finished_label.pack()
+
     def start_experiment(self):
         GoreCom.send_data(serial_obj, 't')
 
+        # String to store input
+        total_input = ''
 
-        self.serial_data = []
-        counter = 4
-        while counter > 0:
-            self.serial_data.append(GoreCom.receive_data(serial_obj))
-            counter -= 1
-
-        for data in range(len(self.serial_data)):
-            print(self.serial_data[data])
-
-
-
-        # Split the received data into voltage and current values
+        # Lists to store data
         voltage_data = []
         current_data = []
-        for line in self.serial_data:
-            values = line.split(',')
-            if len(values) == 2:
-                voltage_data.append(float(values[0]))
-                current_data.append(float(values[1]))
 
-        print(voltage_data)
-        print(current_data)
+        #collect data
+        total_input = GoreCom.receive_data2(serial_obj, voltage_data, current_data, total_input)
 
         # Clear the existing plot
         self.plot.clear()
@@ -235,17 +245,48 @@ class Frame2(tk.Frame):
         # Update the canvas to show the new plot
         self.canvas.draw()
 
+        # Add options to save image or to save csv
+        self.save_graph_button = tk.Button(self, text="Save graph (.png)", command=lambda: self.save_graph())
+        self.save_graph_button.pack()
+        self.save_data_button = tk.Button(self, text="Save data (.csv)", command=lambda: self.save_data(voltage_data, current_data))
+        self.save_data_button.pack()
+
+
     def save_graph(self):
         if self.serial_data:
             # Replace this with your code to save the graph
             self.figure.savefig("serial_data_graph.png")
-            print("Graph saved as serial_data_graph.png")
+            # Confirm that the image has been saved
+            self.image_confirmation = tk.Label(self, text="Image saved as 'serial_data_graph.png'")
+            self.image_confirmation.pack()
+
+    def save_data(self, voltage_data, current_data):
+        if self.serial_data:
+            # Specify the filename for the CSV file
+            csv_filename = "data.csv"
+
+            # Combine the voltage and current data into rows
+            data_rows = list(zip(voltage_data, current_data))
+
+            # Write the data to the CSV file
+            with open(csv_filename, mode='w', newline='') as file:
+                writer = csv.writer(file)
+
+                # Write a header row if needed
+                writer.writerow(["Voltage (V)", "Current (A)"])
+
+                # Write the data rows
+                writer.writerows(data_rows)
+
+            # Confirm that the data has been saved
+            self.data_confirmation = tk.Label(self, text="Data saved as 'data.csv'")
+            self.data_confirmation.pack()
 
 class Frame3(tk.Frame):
     def __init__(self, master, switch_frame):
         super().__init__(master)
 
-        self.label = tk.Label(self, text="Frame 3")
+        self.label = tk.Label(self, text="Data Processing Menu")
         self.label.pack(pady=20)
 
         self.select_directory_button = tk.Button(self, text="Select Directory", command=self.select_directory)
